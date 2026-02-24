@@ -1,0 +1,3 @@
+file_pattern,comments,status
+/Path/To/True/Positive,An unmasked PAN detail is present in this file,True Positive
+/Path/To/Flase/Positive,This file contains no PAN details/ Contains Masked PAN Details,False Positive
