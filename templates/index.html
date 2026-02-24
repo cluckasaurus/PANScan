@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PANScan - File Classifier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            max-width: 650px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 1em;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .cleanup-btn {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cleanup-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+        }
+
+        .cleanup-uploads-btn {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .cleanup-uploads-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+        }
+
+        /* Tab Styles */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 25px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            background: #f5f5f5;
+            border: none;
+            font-size: 1em;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s ease;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        .tab:hover {
+            background: #e8e8e8;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .folder-input-group {
+            margin-bottom: 20px;
+        }
+
+        .folder-input-label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1em;
+        }
+
+        .folder-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .folder-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .folder-hint {
+            color: #999;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 10px;
+            padding: 25px;
+            text-align: center;
+            background: #f8f9ff;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover {
+            background: #e8ebff;
+            border-color: #764ba2;
+        }
+        
+        .upload-area.dragover {
+            background: #e8ebff;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        
+        .upload-text {
+            color: #333;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+        
+        .upload-subtext {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .alert-error {
+            background: #fee;
+            color: #c33;
+            border-left: 4px solid #c33;
+        }
+        
+        .alert-success {
+            background: #efe;
+            color: #3c3;
+            border-left: 4px solid #3c3;
+        }
+        
+        .file-info {
+            background: #f0f0f0;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .file-info.show {
+            display: block;
+        }
+        
+        .file-name {
+            font-weight: bold;
+            color: #333;
+            word-break: break-all;
+        }
+        
+        .features {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .feature {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #666;
+        }
+        
+        .feature-icon {
+            margin-right: 8px;
+            font-size: 1.3em;
+        }
+        
+        .processing-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .processing-overlay.show {
+            display: flex;
+        }
+        
+        .processing-content {
+            background: white;
+            border-radius: 15px;
+            padding: 35px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 450px;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 20px;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .processing-title {
+            font-size: 1.6em;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .processing-text {
+            color: #666;
+            font-size: 1em;
+            line-height: 1.5;
+        }
+        
+        .processing-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Processing Overlay -->
+    <div class="processing-overlay" id="processingOverlay">
+        <div class="processing-content">
+            <div class="processing-icon">⚙️</div>
+            <div class="spinner"></div>
+            <div class="processing-title">Processing Your File</div>
+            <div class="processing-text">
+                Please wait while we analyze and classify your scan results...<br>
+                This may take a few moments depending on file size.<br>
+                <small style="color: #999; margin-top: 10px; display: block;">Large files (5M+ rows) may take several minutes</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <h1>🔍 PANScan</h1>
+        <p class="subtitle">PAN Vulnerability Scanner & Classifier</p>
+        
+        <div class="header-actions">
+            <button class="cleanup-btn" onclick="confirmCleanup()">
+                🗑️ Clear Old Reviewed Files
+            </button>
+            <button class="cleanup-uploads-btn" onclick="confirmCleanupUploads()">
+                🗑️ Clear Old Uploaded Files
+            </button>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('single')">📄 Single File Scan</button>
+            <button class="tab" onclick="switchTab('bulk')">📁 Folder Scan</button>
+            <button class="tab" onclick="switchTab('split')">✂️ CSV Splitter</button>
+        </div>
+
+        <!-- Single File Tab Content -->
+        <div id="single-tab" class="tab-content active">
+            <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Click to upload or drag and drop</div>
+                    <div class="upload-subtext">CSV files only (Max 2GB)</div>
+                    <input type="file" id="fileInput" name="file" accept=".csv" required>
+                </div>
+                
+                <div class="file-info" id="fileInfo">
+                    <div>Selected file:</div>
+                    <div class="file-name" id="fileName"></div>
+                </div>
+                
+                <button type="submit" class="btn" id="submitBtn" disabled>
+                    Process File
+                </button>
+            </form>
+            
+            
+        </div>
+
+        <!-- Bulk Folder Tab Content -->
+        <div id="bulk-tab" class="tab-content">
+            <form id="folderForm" action="/bulk_scan" method="post">
+                <div class="folder-input-group">
+                    <label class="folder-input-label" for="folderPath">📂 Folder Path</label>
+                    <input 
+                        type="text" 
+                        id="folderPath" 
+                        name="folder_path" 
+                        class="folder-input" 
+                        placeholder="C:\Users\YourName\Documents\ScanFiles" 
+                        required>
+                    <div class="folder-hint">Enter the full path to the folder containing CSV files</div>
+                </div>
+                
+                <button type="submit" class="btn" id="bulkSubmitBtn">
+                    Scan Folder
+                </button>
+            </form>
+            
+            
+        </div>
+
+        <!-- CSV Splitter Tab Content -->
+        <div id="split-tab" class="tab-content">
+            <div style="background: #f0f7ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #667eea;">
+                <div style="font-weight: 600; color: #333; margin-bottom: 5px;">✂️ CSV File Splitter</div>
+                <div style="color: #666; font-size: 0.9em; line-height: 1.5;">
+                    Upload a CSV file to analyze its size (supports up to 10M+ rows). Files with more than <strong>1 million rows</strong> will be automatically split into smaller chunks of 1 million rows each.
+                </div>
+            </div>
+
+            <form id="splitForm" action="/split_csv" method="post" enctype="multipart/form-data">
+                <div class="upload-area" id="splitUploadArea">
+                    <div class="upload-icon">✂️</div>
+                    <div class="upload-text">Click to upload or drag and drop</div>
+                    <div class="upload-subtext">CSV files only (Max 2GB, supports up to 10M+ rows)</div>
+                    <input type="file" id="splitFileInput" name="file" accept=".csv" required>
+                </div>
+                
+                <div class="file-info" id="splitFileInfo">
+                    <div>Selected file:</div>
+                    <div class="file-name" id="splitFileName"></div>
+                </div>
+                
+                <button type="submit" class="btn" id="splitSubmitBtn" disabled>
+                    Analyze & Split CSV
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const submitBtn = document.getElementById('submitBtn');
+        const uploadForm = document.getElementById('uploadForm');
+        const folderForm = document.getElementById('folderForm');
+        const processingOverlay = document.getElementById('processingOverlay');
+        
+        // Cleanup confirmation
+        function confirmCleanup() {
+            if (confirm('Are you sure you want to delete all old reviewed files from the outputs folder?\n\nThis action cannot be undone.')) {
+                window.location.href = '/cleanup_outputs';
+            }
+        }
+        
+        // Cleanup uploads confirmation
+        function confirmCleanupUploads() {
+            if (confirm('Are you sure you want to delete all uploaded files from the uploads folder?\n\nThis action cannot be undone.')) {
+                window.location.href = '/cleanup_uploads';
+            }
+        }
+        
+        // Tab switching function
+        function switchTab(tabName) {
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => tab.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            if (tabName === 'single') {
+                tabs[0].classList.add('active');
+                document.getElementById('single-tab').classList.add('active');
+            } else if (tabName === 'bulk') {
+                tabs[1].classList.add('active');
+                document.getElementById('bulk-tab').classList.add('active');
+            } else if (tabName === 'split') {
+                tabs[2].classList.add('active');
+                document.getElementById('split-tab').classList.add('active');
+            }
+        }
+        
+        // Click to upload
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+        
+        // File selection
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                fileName.textContent = file.name;
+                fileInfo.classList.add('show');
+                submitBtn.disabled = false;
+            }
+        });
+        
+        // Form submission - show processing overlay
+        uploadForm.addEventListener('submit', (e) => {
+            // Show processing overlay
+            processingOverlay.classList.add('show');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+        });
+
+        // Folder form submission - no overlay, will show processing page
+        folderForm.addEventListener('submit', (e) => {
+            // Let the form submit normally, the processing page will handle animation
+        });
+
+        // CSV Splitter form handling
+        const splitUploadArea = document.getElementById('splitUploadArea');
+        const splitFileInput = document.getElementById('splitFileInput');
+        const splitFileInfo = document.getElementById('splitFileInfo');
+        const splitFileName = document.getElementById('splitFileName');
+        const splitSubmitBtn = document.getElementById('splitSubmitBtn');
+        const splitForm = document.getElementById('splitForm');
+        
+        // Click to upload for split
+        splitUploadArea.addEventListener('click', () => {
+            splitFileInput.click();
+        });
+        
+        // File selection for split
+        splitFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                splitFileName.textContent = file.name;
+                splitFileInfo.classList.add('show');
+                splitSubmitBtn.disabled = false;
+            }
+        });
+        
+        // Split form submission - show processing overlay
+        splitForm.addEventListener('submit', (e) => {
+            processingOverlay.classList.add('show');
+            splitSubmitBtn.disabled = true;
+            splitSubmitBtn.textContent = 'Processing...';
+        });
+        
+        // Drag and drop for split
+        splitUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            splitUploadArea.classList.add('dragover');
+        });
+        
+        splitUploadArea.addEventListener('dragleave', () => {
+            splitUploadArea.classList.remove('dragover');
+        });
+        
+        splitUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            splitUploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                splitFileInput.files = files;
+                splitFileName.textContent = files[0].name;
+                splitFileInfo.classList.add('show');
+                splitSubmitBtn.disabled = false;
+            }
+        });
+        
+        // Hide processing overlay on page load if there's an error
+        window.addEventListener('load', () => {
+            processingOverlay.classList.remove('show');
+        });
+        
+        // Drag and drop
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                fileName.textContent = files[0].name;
+                fileInfo.classList.add('show');
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

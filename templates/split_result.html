@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Split Results - PANScan</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1em;
+        }
+        
+        .success-icon {
+            text-align: center;
+            font-size: 4em;
+            margin-bottom: 20px;
+            animation: bounce 1s ease;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            60% { transform: translateY(-10px); }
+        }
+        
+        .info-box {
+            background: #f0f7ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .info-value {
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        .files-section {
+            margin-top: 30px;
+        }
+        
+        .section-title {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .file-list {
+            list-style: none;
+        }
+        
+        .file-item {
+            background: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .file-item:hover {
+            background: #f0f0f0;
+            transform: translateX(5px);
+        }
+        
+        .file-name {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            flex: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-decoration: none;
+            text-align: center;
+            min-width: 200px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #868CFF 0%, #9C9EFE 100%);
+        }
+        
+        .download-all-btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">✅</div>
+        <h1>CSV Split Complete!</h1>
+        <p class="subtitle">Your file has been successfully split</p>
+        
+        <div class="info-box">
+            <div class="info-row">
+                <span class="info-label">Original File:</span>
+                <span class="info-value">{{ original_filename }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Total Rows:</span>
+                <span class="info-value">{{ "{:,}".format(total_rows) }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Files Created:</span>
+                <span class="info-value">{{ num_files }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Rows per File:</span>
+                <span class="info-value">~1,000,000</span>
+            </div>
+        </div>
+        
+        <div class="files-section">
+            <div class="section-title">
+                <span>📁</span>
+                <span>Split Files</span>
+            </div>
+            
+            <ul class="file-list">
+                {% for file in split_files %}
+                <li class="file-item">
+                    <span class="file-name">{{ file.display_name }}</span>
+                    <a href="/download_split/{{ file.filename }}" class="download-btn">
+                        ⬇️ Download
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="/download_all_splits/{{ split_files[0].filename.split('_')[0] }}" class="btn download-all-btn">
+                📦 Download All as ZIP
+            </a>
+            <a href="/" class="btn btn-secondary">
+                ← Back to Home
+            </a>
+        </div>
+    </div>
+</body>
+</html>

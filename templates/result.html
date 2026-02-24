@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PANScan - Processing Complete</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            max-width: 550px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 2em;
+        }
+        
+        .success-icon {
+            text-align: center;
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            animation: bounce 1s ease;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            60% { transform: translateY(-10px); }
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 1em;
+        }
+        
+        .stats-container {
+            background: #f8f9ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-title {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .stat-row.true-positive {
+            border-left-color: #f44336;
+        }
+        
+        .stat-row.false-positive {
+            border-left-color: #ff9800;
+        }
+        
+        .stat-row.not-found {
+            border-left-color: #9e9e9e;
+        }
+        
+        .stat-row.total {
+            border-left-color: #2196f3;
+            font-weight: bold;
+        }
+        
+        .stat-label {
+            color: #333;
+            font-size: 1em;
+        }
+        
+        .stat-value {
+            color: #667eea;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        
+        .stat-row.true-positive .stat-value {
+            color: #f44336;
+        }
+        
+        .stat-row.false-positive .stat-value {
+            color: #ff9800;
+        }
+        
+        .stat-row.not-found .stat-value {
+            color: #9e9e9e;
+        }
+        
+        .stat-row.total .stat-value {
+            color: #2196f3;
+        }
+        
+        .download-section {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .download-label {
+            color: #666;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+        
+        .download-filename {
+            color: #333;
+            font-weight: bold;
+            margin-bottom: 12px;
+            word-break: break-all;
+        }
+        
+        .btn {
+            display: block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 1em;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-decoration: none;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #757575 0%, #616161 100%);
+        }
+        
+        .btn-secondary:hover {
+            box-shadow: 0 10px 20px rgba(117, 117, 117, 0.4);
+        }
+        
+        .percentage {
+            font-size: 0.75em;
+            color: #999;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">✅</div>
+        <h1>Processing Complete!</h1>
+        <p class="subtitle">Your file has been analyzed successfully</p>
+        
+        <div class="stats-container">
+            <div class="stat-title">📊 Analysis Summary</div>
+            
+            <div class="stat-row true-positive">
+                <span class="stat-label">🔴 True Positive Findings</span>
+                <span>
+                    <span class="stat-value">{{ stats.true_positive }}</span>
+                    <span class="percentage">({{ "%.1f"|format((stats.true_positive / stats.total * 100) if stats.total > 0 else 0) }}%)</span>
+                </span>
+            </div>
+            
+            <div class="stat-row false-positive">
+                <span class="stat-label">🟠 False Positives</span>
+                <span>
+                    <span class="stat-value">{{ stats.false_positive }}</span>
+                    <span class="percentage">({{ "%.1f"|format((stats.false_positive / stats.total * 100) if stats.total > 0 else 0) }}%)</span>
+                </span>
+            </div>
+            
+            <div class="stat-row not-found">
+                <span class="stat-label">⚪ Not Found</span>
+                <span>
+                    <span class="stat-value">{{ stats.not_found }}</span>
+                    <span class="percentage">({{ "%.1f"|format((stats.not_found / stats.total * 100) if stats.total > 0 else 0) }}%)</span>
+                </span>
+            </div>
+            
+            <div class="stat-row total">
+                <span class="stat-label">📝 Total Records</span>
+                <span class="stat-value">{{ stats.total }}</span>
+            </div>
+        </div>
+        
+        <div class="download-section">
+            <div class="download-label">Output File:</div>
+            <div class="download-filename">{{ filename }}</div>
+        </div>
+        
+        <a href="/download/{{ download_path }}" class="btn">
+            ⬇️ Download Reviewed File
+        </a>
+        
+        <a href="/" class="btn btn-secondary">
+            🔄 Process Another File
+        </a>
+    </div>
+</body>
+</html>

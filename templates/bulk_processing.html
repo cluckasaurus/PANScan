@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PANScan - Bulk Scan Processing</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            max-width: 1000px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 5px;
+            font-size: 2em;
+        }
+        
+        .processing-icon {
+            text-align: center;
+            font-size: 3.5em;
+            margin-bottom: 15px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .folder-path {
+            background: #f0f0f0;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            text-align: center;
+            color: #555;
+            font-size: 0.9em;
+            word-break: break-all;
+        }
+
+        .folder-path strong {
+            color: #333;
+        }
+        
+        .progress-info {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .results-section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .results-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .results-table th {
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+        
+        .results-table th:first-child {
+            border-top-left-radius: 8px;
+        }
+        
+        .results-table th:last-child {
+            border-top-right-radius: 8px;
+        }
+        
+        .results-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+            position: relative;
+        }
+        
+        .results-table tbody tr:hover {
+            background: #f8f9ff;
+        }
+        
+        .filename-cell {
+            font-weight: 500;
+            max-width: 300px;
+            word-break: break-word;
+        }
+        
+        .number-cell {
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.05em;
+        }
+        
+        .true-positive-num {
+            color: #f44336;
+        }
+        
+        .false-positive-num {
+            color: #ff9800;
+        }
+        
+        .not-found-num {
+            color: #9e9e9e;
+        }
+        
+        .total-num {
+            color: #2196f3;
+        }
+
+        .download-cell {
+            text-align: center;
+            padding: 8px;
+        }
+
+        .download-btn {
+            background: linear-gradient(135deg, #43a047 0%, #2e7d32 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .download-btn:disabled {
+            background: #e0e0e0;
+            color: #9e9e9e;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .download-btn:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(67, 160, 71, 0.4);
+        }
+
+        .processing-row {
+            background: #fff9e6 !important;
+            position: relative;
+        }
+
+        .processing-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 249, 230, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        .processing-text {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        .spinner-small {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .pending-row {
+            opacity: 0.5;
+        }
+
+        .completed-row {
+            animation: highlightRow 0.5s ease;
+        }
+
+        .error-row {
+            background: #ffebee !important;
+        }
+
+        .error-cell {
+            color: #d32f2f;
+            font-weight: 600;
+        }
+
+        @keyframes highlightRow {
+            0% { background: #e8ffe8; }
+            100% { background: transparent; }
+        }
+
+        .grand-total-row {
+            background: #f8f9ff !important;
+            font-weight: bold;
+            border-top: 3px solid #667eea !important;
+            display: none;
+        }
+
+        .grand-total-row.visible {
+            display: table-row;
+        }
+
+        .grand-total-row td {
+            padding: 15px 12px;
+            font-size: 1.1em;
+        }
+
+        .grand-total-label {
+            color: #667eea;
+            font-size: 1.15em;
+        }
+
+        .error-cell {
+            color: #f44336;
+            font-size: 0.85em;
+            font-style: italic;
+        }
+        
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .summary-cards.visible {
+            opacity: 1;
+        }
+
+        .summary-card {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .summary-card.true-positive {
+            border-left-color: #f44336;
+        }
+
+        .summary-card.false-positive {
+            border-left-color: #ff9800;
+        }
+
+        .summary-card.not-found {
+            border-left-color: #9e9e9e;
+        }
+
+        .summary-card.total {
+            border-left-color: #2196f3;
+        }
+
+        .card-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+        }
+
+        .card-value {
+            color: #667eea;
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .summary-card.true-positive .card-value {
+            color: #f44336;
+        }
+
+        .summary-card.false-positive .card-value {
+            color: #ff9800;
+        }
+
+        .summary-card.not-found .card-value {
+            color: #9e9e9e;
+        }
+
+        .summary-card.total .card-value {
+            color: #2196f3;
+        }
+
+        .complete-icon {
+            text-align: center;
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            display: none;
+            animation: bounce 1s ease;
+        }
+
+        .complete-icon.visible {
+            display: block;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            60% { transform: translateY(-10px); }
+        }
+        
+        .btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-decoration: none;
+            text-align: center;
+            opacity: 0;
+        }
+
+        .btn.visible {
+            opacity: 1;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        #downloadButton:hover {
+            box-shadow: 0 10px 20px rgba(67, 160, 71, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="processing-icon" id="processingIcon">⚙️</div>
+        <div class="complete-icon" id="completeIcon">✅</div>
+        <h1 id="mainTitle">Processing Bulk Scan...</h1>
+        <p class="subtitle" id="subtitle">Analyzing CSV files from folder</p>
+        
+        <div class="folder-path">
+            <strong>Scanned Folder:</strong> <span id="folderPath">{{ folder_path }}</span>
+        </div>
+
+        <p class="progress-info" id="progressInfo">
+            Processing <span id="currentFile">0</span> of <span id="totalFiles">0</span> files...
+        </p>
+
+        <!-- Grand Total Summary Cards -->
+        <div id="summarySection" style="display: none;">
+            <div class="section-title">📊 Grand Total Summary</div>
+            <div class="summary-cards" id="summaryCards">
+                <div class="summary-card true-positive">
+                    <div class="card-label">🔴 True Positives</div>
+                    <div class="card-value" id="grandTruePositive">0</div>
+                </div>
+                <div class="summary-card false-positive">
+                    <div class="card-label">🟠 False Positives</div>
+                    <div class="card-value" id="grandFalsePositive">0</div>
+                </div>
+                <div class="summary-card not-found">
+                    <div class="card-label">⚪ Not Found</div>
+                    <div class="card-value" id="grandNotFound">0</div>
+                </div>
+                <div class="summary-card total">
+                    <div class="card-label">📈 Total Items</div>
+                    <div class="card-value" id="grandTotal">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Results Table -->
+        <div class="results-section">
+            <div class="section-title">📋 Processing Results</div>
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>File Name</th>
+                        <th style="text-align: center;">True Positives</th>
+                        <th style="text-align: center;">False Positives</th>
+                        <th style="text-align: center;">Not Found</th>
+                        <th style="text-align: center;">Total Items</th>
+                        <th style="text-align: center;">Download</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTableBody">
+                    <!-- Rows will be added dynamically -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+            <a href="/download_bulk_results/{{ session_id }}" class="btn" id="downloadButton" style="background: linear-gradient(135deg, #43a047 0%, #2e7d32 100%);">
+                📥 Download All Reviewed Files (ZIP)
+            </a>
+            <a href="/" class="btn" id="backButton">Scan Another Folder</a>
+        </div>
+    </div>
+
+    <script>
+        const folderPath = {{ folder_path | tojson }};
+        const csvFiles = {{ csv_files | tojson }};
+        const sessionId = {{ session_id | tojson }};
+        let currentIndex = 0;
+        let grandTotal = {
+            true_positive: 0,
+            false_positive: 0,
+            not_found: 0,
+            total: 0
+        };
+
+        console.log('=== Bulk Processing Started ===');
+        console.log('Folder path:', folderPath);
+        console.log('Folder path type:', typeof folderPath);
+        console.log('Session ID:', sessionId);
+        console.log('CSV files to process:', csvFiles);
+        console.log('Number of files:', csvFiles.length);
+
+        // Initialize the table with all files
+        function initializeTable() {
+            const tbody = document.getElementById('resultsTableBody');
+            document.getElementById('totalFiles').textContent = csvFiles.length;
+            
+            csvFiles.forEach((file, index) => {
+                const row = document.createElement('tr');
+                row.id = `row-${index}`;
+                row.className = 'pending-row';
+                row.innerHTML = `
+                    <td class="filename-cell">${file}</td>
+                    <td class="number-cell">-</td>
+                    <td class="number-cell">-</td>
+                    <td class="number-cell">-</td>
+                    <td class="number-cell">-</td>
+                    <td class="download-cell">
+                        <button class="download-btn" disabled id="download-${index}">
+                            📥 Download
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Add grand total row (hidden initially)
+            const grandRow = document.createElement('tr');
+            grandRow.id = 'grandTotalRow';
+            grandRow.className = 'grand-total-row';
+            grandRow.innerHTML = `
+                <td class="grand-total-label">GRAND TOTAL</td>
+                <td class="number-cell true-positive-num" id="tableTruePositive">0</td>
+                <td class="number-cell false-positive-num" id="tableFalsePositive">0</td>
+                <td class="number-cell not-found-num" id="tableNotFound">0</td>
+                <td class="number-cell total-num" id="tableTotal">0</td>
+                <td></td>
+            `;
+            tbody.appendChild(grandRow);
+        }
+
+        // Process a single file
+        async function processFile(index) {
+            const row = document.getElementById(`row-${index}`);
+            const fileName = csvFiles[index];
+            
+            // Update progress
+            document.getElementById('currentFile').textContent = index + 1;
+            
+            // Mark row as processing
+            row.className = 'processing-row';
+            
+            // Create processing overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'processing-overlay';
+            overlay.innerHTML = `
+                <div class="processing-text">
+                    <div class="spinner-small"></div>
+                    Processing file...
+                </div>
+            `;
+            
+            // Add overlay to all cells except filename
+            const cells = row.querySelectorAll('td');
+            cells[0].style.position = 'relative';
+            for (let i = 1; i < cells.length; i++) {
+                cells[i].style.position = 'relative';
+                if (i === 1) {
+                    cells[i].appendChild(overlay);
+                }
+            }
+
+            try {
+                console.log(`\n--- Processing file ${index + 1}/${csvFiles.length}: ${fileName} ---`);
+                console.log('Sending request with:', { folder_path: folderPath, file_name: fileName, session_id: sessionId });
+                
+                // Call backend to process this file
+                const response = await fetch('/process_single_file', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        folder_path: folderPath,
+                        file_name: fileName,
+                        session_id: sessionId
+                    })
+                });
+
+                console.log('Response status:', response.status, response.statusText);
+                const result = await response.json();
+                
+                console.log('Processing result for', fileName, ':', result);
+                
+                // Remove overlay
+                if (overlay.parentNode) {
+                    overlay.remove();
+                }
+
+                // Check if there was an error
+                if (result.error || !response.ok) {
+                    throw new Error(result.error || 'Processing failed');
+                }
+
+                // Ensure all values are numbers
+                const truePositive = parseInt(result.true_positive) || 0;
+                const falsePositive = parseInt(result.false_positive) || 0;
+                const notFound = parseInt(result.not_found) || 0;
+                const total = parseInt(result.total) || 0;
+
+                // Update row with results
+                row.className = 'completed-row';
+                cells[1].innerHTML = `<span class="true-positive-num">${truePositive}</span>`;
+                cells[2].innerHTML = `<span class="false-positive-num">${falsePositive}</span>`;
+                cells[3].innerHTML = `<span class="not-found-num">${notFound}</span>`;
+                cells[4].innerHTML = `<span class="total-num">${total}</span>`;
+
+                // Enable download button
+                const downloadBtn = document.getElementById(`download-${index}`);
+                downloadBtn.disabled = false;
+                downloadBtn.onclick = () => {
+                    window.location.href = `/download_single_result/${sessionId}/${encodeURIComponent(fileName)}`;
+                };
+
+                // Update grand totals
+                grandTotal.true_positive += truePositive;
+                grandTotal.false_positive += falsePositive;
+                grandTotal.not_found += notFound;
+                grandTotal.total += total;
+
+                // Reset position styles
+                cells[0].style.position = '';
+                for (let i = 1; i < cells.length; i++) {
+                    cells[i].style.position = '';
+                }
+
+            } catch (error) {
+                console.error('!!! ERROR processing file:', fileName);
+                console.error('Error details:', error);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+                
+                // Remove overlay
+                if (overlay.parentNode) {
+                    overlay.remove();
+                }
+
+                // Show error
+                row.className = 'error-row';
+                cells[1].innerHTML = `<span class="error-cell">Error: ${error.message}</span>`;
+                cells[1].colSpan = 5;
+                cells[2].style.display = 'none';
+                cells[3].style.display = 'none';
+                cells[4].style.display = 'none';
+                cells[5].style.display = 'none';
+                
+                // Reset position styles
+                cells[0].style.position = '';
+                for (let i = 1; i < cells.length; i++) {
+                    cells[i].style.position = '';
+                }
+            }
+        }
+
+        // Process all files sequentially
+        async function processAllFiles() {
+            console.log('\n=== Starting sequential file processing ===');
+            for (let i = 0; i < csvFiles.length; i++) {
+                console.log(`Processing file ${i + 1} of ${csvFiles.length}...`);
+                await processFile(i);
+                console.log(`Completed file ${i + 1}`);
+            }
+
+            console.log('\n=== All files processed ===');
+            console.log('Final grand total:', grandTotal);
+            // All files processed - show grand total
+            showGrandTotal();
+        }
+
+        function showGrandTotal() {
+            console.log('Showing grand total:', grandTotal);
+            
+            // Update UI for completion
+            document.getElementById('processingIcon').style.display = 'none';
+            document.getElementById('completeIcon').classList.add('visible');
+            document.getElementById('mainTitle').textContent = 'Bulk Scan Complete!';
+            document.getElementById('subtitle').textContent = 'All CSV files have been analyzed';
+            document.getElementById('progressInfo').textContent = `Successfully processed ${csvFiles.length} file(s)`;
+
+            // Show grand total row in table
+            document.getElementById('grandTotalRow').classList.add('visible');
+            document.getElementById('tableTruePositive').textContent = grandTotal.true_positive || 0;
+            document.getElementById('tableFalsePositive').textContent = grandTotal.false_positive || 0;
+            document.getElementById('tableNotFound').textContent = grandTotal.not_found || 0;
+            document.getElementById('tableTotal').textContent = grandTotal.total || 0;
+
+            // Show summary cards
+            document.getElementById('summarySection').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('summaryCards').classList.add('visible');
+            }, 100);
+            
+            document.getElementById('grandTruePositive').textContent = grandTotal.true_positive || 0;
+            document.getElementById('grandFalsePositive').textContent = grandTotal.false_positive || 0;
+            document.getElementById('grandNotFound').textContent = grandTotal.not_found || 0;
+            document.getElementById('grandTotal').textContent = grandTotal.total || 0;
+
+            // Show buttons
+            document.getElementById('downloadButton').classList.add('visible');
+            document.getElementById('backButton').classList.add('visible');
+        }
+
+        // Start processing when page loads
+        window.addEventListener('load', () => {
+            console.log('Page loaded, initializing table...');
+            initializeTable();
+            console.log('Starting to process files...');
+            processAllFiles();
+        });
+    </script>
+</body>
+</html>

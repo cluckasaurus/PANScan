@@ -1,0 +1,19 @@
+# Ignore output, reviewed, Files, database, and upload folders
+outputs/
+Reviewed/
+uploads/
+Files/Database/
+# Ignore Python cache and environment files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env/
+venv/
+# Ignore Jupyter notebook checkpoints
+.ipynb_checkpoints/
+# Ignore VS Code settings
+.vscode/
+# Ignore other common files
+*.log
+*.tmp
